@@ -4,12 +4,12 @@ vars:
   - name: base_model
     type: string
     label: Base Model
-    default: yolov9-c-converted.pt
+    default: yolov9-c.pt
 
   - name: data_folder
     type: folder
     label: Data Folder
-    default: coco
+    default: coco128
 
   - name: train_epoch
     type: string
@@ -34,15 +34,14 @@ steps:
     image: p9ebc297/yolov9-train:v2
     flavor: medium
     folders:
-      - ${data_folder}:/mlsteam/data/coco
+      - ${data_folder}:/mlsteam/data/${data_folder}
     run: |
       # cd src && pip install mlflow  &&  ls -a /usr/local/lib/python3.9/dist-packages
-      export WANDB_DISABLED=true 
       # pip install mlflow bentoml
       #pip install -r requirements.txt
       #pip uninstall -y opencv-python
       #pip install opencv-python-headless==4.5.5.64
-      python train_dual.py --workers 1 --device 0 --batch-size ${train_batchsize} --epochs ${train_epoch} --data data/coco.yaml \
+      python train_dual.py --workers 1 --device 0 --batch-size ${train_batchsize} --epochs ${train_epoch} --data data/${data_folder}.yaml \
           --img 640 --cfg models/detect/yolov9-c.yaml --weights ${base_model} \
           --name yolov9-custom --hyp hyp.scratch-high.yaml \
           --min-items 0 --close-mosaic 15

@@ -7,7 +7,7 @@ ipython
 matplotlib>=3.2.2
 numpy>=1.18.5
 opencv-python>=4.1.1
-Pillow>=7.1.2
+Pillow==9.5.0
 psutil
 PyYAML>=5.3.1
 requests>=2.23.0
@@ -17,9 +17,10 @@ torch>=1.7.0
 torchvision>=0.8.1
 tqdm>=4.64.0
 # protobuf<=3.20.1
+mlflow
 
 # Logging ---------------------------------------------------------------------
-tensorboard>=2.4.1
+# tensorboard>=2.4.1
 # clearml>=1.2.0
 # comet
 
