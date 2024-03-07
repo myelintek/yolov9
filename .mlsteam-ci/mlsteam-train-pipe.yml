@@ -4,11 +4,11 @@ vars:
   - name: base_model
     type: string
     label: Base Model
-    default: lmsys/vicuna-7b-v1.3
+    default: yolov9-c-converted.pt
 
   - name: data_folder
     type: folder
-    label: Model Folder
+    label: Data Folder
     default: coco
 
   - name: train_epoch
@@ -19,34 +19,9 @@ vars:
   - name: train_batchsize
     type: string
     label: Batch Size Per Device
-    default: '1'
-
-  - name: output_name
-    type: string
-    label: Output Name
-    default: vicuna-7b-dummy-cuda
-    
-  - name: model_max_length
-    type: string
-    label: Model Max Length
-    default: '1024'
+    default: '4'
 
 steps:
-  - name: checkout code
-    type: checkout
-    needs: null
-    dvc: no
-    location: .
-
-  - name: check data
-    type: docker_run
-    needs: pre
-    flavor: micro
-    image: p9ebc297/yolov9-train:v1
-    run: |
-      apt install -y tree &&  tree ./ && cd src && \
-        test -e ${data_path}
-
   - name: Install required packages and train
     type: docker_run
     needs: pre
@@ -61,7 +36,7 @@ steps:
       pip install -r requirements.txt
       pip uninstall -y opencv-python
       pip install opencv-python-headless==4.5.5.64
-      python train.py --workers 1 --device 0 --batch-size 4 --epochs 1 --data data/coco.yaml \
-          --img 640 --cfg models/detect/yolov9-c.yaml --weights 'yolov9-c-converted.pt' \
+      python train.py --workers 1 --device 0 --batch-size ${train_batchsize} --epochs ${train_epoch} --data data/coco.yaml \
+          --img 640 --cfg models/detect/yolov9-c.yaml --weights ${base_model} \
           --name yolov9-custom --hyp hyp.scratch-high.yaml \
           --min-items 0 --close-mosaic 15
