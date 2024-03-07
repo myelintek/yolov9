@@ -39,9 +39,9 @@ steps:
       # cd src && pip install mlflow  &&  ls -a /usr/local/lib/python3.9/dist-packages
       export WANDB_DISABLED=true 
       # pip install mlflow bentoml
-      pip install -r requirements.txt
-      pip uninstall -y opencv-python
-      pip install opencv-python-headless==4.5.5.64
+      #pip install -r requirements.txt
+      #pip uninstall -y opencv-python
+      #pip install opencv-python-headless==4.5.5.64
       python train.py --workers 1 --device 0 --batch-size ${train_batchsize} --epochs ${train_epoch} --data data/coco.yaml \
           --img 640 --cfg models/detect/yolov9-c.yaml --weights ${base_model} \
           --name yolov9-custom --hyp hyp.scratch-high.yaml \
