@@ -29,12 +29,12 @@ steps:
     location: .
   - name: Install required packages and train
     type: docker_run
-    needs: pre
+    needs:
+      - checkout code
     image: p9ebc297/yolov9-train:v1
     flavor: medium
     folders:
       - ${data_folder}:/mlsteam/data/coco
-      - 
     run: |
       # cd src && pip install mlflow  &&  ls -a /usr/local/lib/python3.9/dist-packages
       export WANDB_DISABLED=true 
