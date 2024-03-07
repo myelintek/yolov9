@@ -24,7 +24,7 @@ vars:
 steps:
   - name: Install required packages and train
     type: docker_run
-    needs: pre
+    needs: null
     image: p9ebc297/yolov9-train:v1
     flavor: medium
     folders:
