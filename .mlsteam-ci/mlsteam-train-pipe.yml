@@ -45,7 +45,7 @@ steps:
   - name: Evaluate
     type: docker_run
     needs:
-      - checkout code
+      - Train
     image: p9ebc297/yolov9-train:v2
     flavor: medium
     folders:
