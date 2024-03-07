@@ -29,8 +29,7 @@ steps:
     location: .
   - name: Install required packages and train
     type: docker_run
-    needs:
-      - checkout code
+    needs: pre
     image: p9ebc297/yolov9-train:v1
     flavor: medium
     folders:
