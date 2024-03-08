@@ -28,7 +28,7 @@ steps:
     dvc: no
     location: .
 
-  - name: pre
+  - name: train
     type: docker_run
     needs:
       - checkout code
@@ -42,10 +42,10 @@ steps:
           --name yolov9-custom --hyp hyp.scratch-high.yaml \
           --min-items 0 --close-mosaic 15
 
-  - name: Evaluate
+  - name: evaluate
     type: docker_run
     needs:
-      - pre
+      - train
     image: p9ebc297/yolov9-train:v2
     flavor: medium
     folders:
