@@ -28,7 +28,7 @@ steps:
     dvc: no
     location: .
 
-  - name: Train
+  - name: pre
     type: docker_run
     needs:
       - checkout code
@@ -45,7 +45,7 @@ steps:
   - name: Evaluate
     type: docker_run
     needs:
-      - Train
+      - pre
     image: p9ebc297/yolov9-train:v2
     flavor: medium
     folders:
