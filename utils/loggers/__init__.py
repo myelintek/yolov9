@@ -12,7 +12,7 @@ from utils.loggers.wandb.wandb_utils import WandbLogger
 from utils.plots import plot_images, plot_labels, plot_results
 from utils.torch_utils import de_parallel
 
-LOGGERS = ('csv', 'tb', 'wandb', 'clearml', 'comet')  # *.csv, TensorBoard, Weights & Biases, ClearML
+LOGGERS = ('csv', 'tb', 'wandb', 'clearml', 'comet', 'mlflow')  # *.csv, TensorBoard, Weights & Biases, ClearML
 RANK = int(os.getenv('RANK', -1))
 
 try:
@@ -48,6 +48,14 @@ try:
 except (ModuleNotFoundError, ImportError, AssertionError):
     comet_ml = None
 
+try:
+    if RANK not in [0, -1]:
+        mlflow = None
+    else:
+        import mlflow
+except (ModuleNotFoundError, ImportError, AssertionError):
+    mlflow = None
+
 
 class Loggers():
     # YOLO Loggers class
@@ -59,6 +67,7 @@ class Loggers():
         self.plots = not opt.noplots  # plot results
         self.logger = logger  # for printing results to console
         self.include = include
+        self.current_epoch = 0
         self.keys = [
             'train/box_loss',
             'train/cls_loss',
@@ -66,14 +75,14 @@ class Loggers():
             'metrics/precision',
             'metrics/recall',
             'metrics/mAP_0.5',
-            'metrics/mAP_0.5:0.95',  # metrics
+            'metrics/mAP_0.5-0.95',  # metrics
             'val/box_loss',
             'val/cls_loss',
             'val/dfl_loss',  # val loss
             'x/lr0',
             'x/lr1',
             'x/lr2']  # params
-        self.best_keys = ['best/epoch', 'best/precision', 'best/recall', 'best/mAP_0.5', 'best/mAP_0.5:0.95']
+        self.best_keys = ['best/epoch', 'best/precision', 'best/recall', 'best/mAP_0.5', 'best/mAP_0.5-0.95']
         for k in LOGGERS:
             setattr(self, k, None)  # init empty logger dictionary
         self.csv = True  # always log to csv
@@ -90,6 +99,10 @@ class Loggers():
         if not comet_ml:
             prefix = colorstr('Comet: ')
             s = f"{prefix}run 'pip install comet_ml' to automatically track and visualize YOLO 🚀 runs in Comet"
+            self.logger.info(s)
+        if not mlflow:
+            prefix = colorstr('MLFlow: ')
+            s = f"{prefix}run 'pip install mlflow' to automatically track and visualize YOLO 🚀 runs in MLFlow"
             self.logger.info(s)
         # TensorBoard
         s = self.save_dir
@@ -128,6 +141,14 @@ class Loggers():
 
         else:
             self.comet_logger = None
+
+        # MLFlow
+        if mlflow and 'mlflow' in self.include:
+            self.mlflow = mlflow
+            run_name = os.getenv('MLFLOW_RUN_NAME', None)
+            self.mlflow.start_run(run_name=run_name)
+        else:
+            self.mlflow = None
 
     @property
     def remote_dataset(self):
@@ -190,6 +211,8 @@ class Loggers():
         if self.comet_logger:
             self.comet_logger.on_train_epoch_end(epoch)
 
+        self.current_epoch = epoch + 1
+
     def on_val_start(self):
         if self.comet_logger:
             self.comet_logger.on_val_start()
@@ -250,6 +273,9 @@ class Loggers():
         if self.comet_logger:
             self.comet_logger.on_fit_epoch_end(x, epoch=epoch)
 
+        if self.mlflow:
+            self.mlflow.log_metrics(x, step=epoch)
+
     def on_model_save(self, last, epoch, final_epoch, best_fitness, fi):
         # Callback runs on model save event
         if (epoch + 1) % self.opt.save_period == 0 and not final_epoch and self.opt.save_period != -1:
@@ -260,6 +286,8 @@ class Loggers():
                                                       model_name='Latest Model',
                                                       auto_delete_file=False)
 
+        if self.mlflow:
+            self.mlflow.log_artifact(last)
         if self.comet_logger:
             self.comet_logger.on_model_save(last, epoch, final_epoch, best_fitness, fi)
 
@@ -294,6 +322,10 @@ class Loggers():
         if self.comet_logger:
             final_results = dict(zip(self.keys[3:10], results))
             self.comet_logger.on_train_end(files, self.save_dir, last, best, epoch, final_results)
+
+        if self.mlflow:
+            self.mlflow.log_params(dict(zip(self.keys[3:10], results)))
+            self.mlflow.end_run()
 
     def on_params_update(self, params: dict):
         # Update hyperparams or configs of the experiment
@@ -347,6 +379,9 @@ class GenericLogger:
 
         if self.wandb:
             self.wandb.log(metrics, step=epoch)
+
+        if self.mlflow:
+            self.mlflow.log_metrics(metrics, step=epoch)
 
     def log_images(self, files, name='Images', epoch=0):
         # Log images to all loggers
