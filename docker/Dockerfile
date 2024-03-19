@@ -1,6 +1,11 @@
-FROM nvcr.io/nvidia/pytorch:21.11-py3
+FROM nvcr.io/nvidia/pytorch:22.09-py3
 
-ADD requirements.txt .
+WORKDIR /mlsteam/lab
+
+# ADD requirements.txt .
+ADD . /mlsteam/lab
+ADD https://ultralytics.com/assets/Arial.ttf /root/.config/Ultralytics/Arial.ttf
+
 RUN sed -i 's/archive.ubuntu.com/tw.archive.ubuntu.com/g' /etc/apt/sources.list && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
