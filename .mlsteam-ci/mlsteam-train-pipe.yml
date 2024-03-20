@@ -21,6 +21,11 @@ vars:
     label: Batch Size Per Device
     default: '4'
 
+  - name: based_model
+    type: model_version
+    label: Based Model
+    default: 'yolov9:v2'
+
 steps:
   - name: checkout code
     type: checkout
@@ -37,6 +42,7 @@ steps:
     folders:
       - ${data_folder}:/mlsteam/data/${data_folder}
     run: |
+      echo "${based_model}"
       python train_dual.py --workers 1 --device 0 --batch-size ${train_batchsize} --epochs ${train_epoch} --data data/${data_folder}.yaml \
           --img 640 --cfg models/detect/yolov9-c.yaml --weights ${base_model} \
           --name yolov9-custom --hyp hyp.scratch-high.yaml \
