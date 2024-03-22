@@ -37,7 +37,7 @@ steps:
     type: docker_run
     needs:
       - checkout code
-    image: p9ebc297/yolov9-train:v2
+    image: "${MLSTEAM_PROJECT_UUID}/yolov9-train:v2"
     flavor: medium
     folders:
       - ${data_folder}:/mlsteam/data/${data_folder}
