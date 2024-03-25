@@ -42,7 +42,7 @@ steps:
     folders:
       - ${data_folder}:/mlsteam/data/${data_folder}
     run: |
-      echo "${based_model}"
+      echo "${based_model.MODEL_PATH}"
       ls -l /working
       echo "$pwd"
       RUN_NAME="yolov9-bs${train_batchsize}-ep${train_epoch}-ds${dta_folder}"
