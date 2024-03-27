@@ -42,13 +42,11 @@ steps:
     folders:
       - ${data_folder}:/mlsteam/data/${data_folder}
     run: |
-      cat /tmp/cmd.sh
       echo "${based_model.MOUNT_PATH}"
-      ls -l /working
       echo "$pwd"
       RUN_NAME="yolov9-bs${train_batchsize}-ep${train_epoch}-ds${dta_folder}"
       MLFLOW_RUN_NAME=$RUN_NAME python train_dual.py --workers 1 --device 0 --batch-size ${train_batchsize} --epochs ${train_epoch} --data data/${data_folder}.yaml \
-          --img 640 --cfg models/detect/yolov9-c.yaml --weights ${base_model} \
+          --img 640 --cfg models/detect/yolov9-c.yaml --weights ${based_model.MOUNT_PATH}/${base_model} \
           --name yolov9-custom --hyp hyp.scratch-high.yaml \
           --min-items 0 --close-mosaic 15
 
