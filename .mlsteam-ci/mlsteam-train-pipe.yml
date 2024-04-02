@@ -55,5 +55,5 @@ steps:
     run: |
       RUN_NAME="yolov9-bs${train_batchsize}-ep${train_epoch}-ds${dta_folder}"
       MLFLOW_RUN_NAME=$RUN_NAME python val_dual.py --data data/${data_folder}.yaml --img 640 --batch 32 --conf 0.001\
-            --iou 0.7 --device 0 --weights 'runs/train/yolov9-custom/weights/best.pt' \
+            --iou 0.7 --device 0 --weights 'runs/train/yolov9-c/weights/${base_model.MODEL_NAME}.pt' \
             --name yolov9
