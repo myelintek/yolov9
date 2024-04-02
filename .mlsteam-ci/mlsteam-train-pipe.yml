@@ -40,7 +40,7 @@ steps:
       echo "${base_model.MOUNT_PATH}"
       echo "$pwd"
       python train_dual.py --workers 1 --device 0 --batch-size ${train_batchsize} --epochs ${train_epoch} --data data/${data_folder}.yaml \
-          --img 640 --cfg models/detect/yolov9-c.yaml --weights ${base_model.MOUNT_PATH}/${MODEL_NAME.MODEL_NAME} \
+          --img 640 --cfg models/detect/yolov9-c.yaml --weights ${base_model.MOUNT_PATH}/${base_model.MODEL_NAME} \
           --name yolov9-c --hyp hyp.scratch-high.yaml \
           --min-items 0 --close-mosaic 15
 
