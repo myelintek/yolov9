@@ -1,30 +1,25 @@
 format: v0.1
 name: Yolov9 Setup & Training
 vars:
-  - name: base_model
-    type: string
-    label: Base Model
-    default: yolov9-c.pt
-
   - name: data_folder
     type: folder
     label: Data Folder
     default: coco128
 
+  - name: base_model
+    type: model_version
+    label: Based Model
+    default: 'yolov9-c:v1'
+
   - name: train_epoch
     type: string
     label: Training Epoch
-    default: '1'
+    default: '10'
 
   - name: train_batchsize
     type: string
     label: Batch Size Per Device
-    default: '4'
-
-  - name: based_model
-    type: model_version
-    label: Based Model
-    default: 'yolov9:v2'
+    default: '8'
 
 steps:
   - name: checkout code
@@ -42,12 +37,11 @@ steps:
     folders:
       - ${data_folder}:/mlsteam/data/${data_folder}
     run: |
-      echo "${based_model.MOUNT_PATH}"
+      echo "${base_model.MOUNT_PATH}"
       echo "$pwd"
-      RUN_NAME="yolov9-bs${train_batchsize}-ep${train_epoch}-ds${dta_folder}"
-      MLFLOW_RUN_NAME=$RUN_NAME python train_dual.py --workers 1 --device 0 --batch-size ${train_batchsize} --epochs ${train_epoch} --data data/${data_folder}.yaml \
-          --img 640 --cfg models/detect/yolov9-c.yaml --weights ${based_model.MOUNT_PATH}/${base_model} \
-          --name yolov9-custom --hyp hyp.scratch-high.yaml \
+      python train_dual.py --workers 1 --device 0 --batch-size ${train_batchsize} --epochs ${train_epoch} --data data/${data_folder}.yaml \
+          --img 640 --cfg models/detect/yolov9-c.yaml --weights ${base_model.MOUNT_PATH}/${MODEL_NAME.MODEL_NAME} \
+          --name yolov9-c --hyp hyp.scratch-high.yaml \
           --min-items 0 --close-mosaic 15
 
   - name: evaluate
@@ -62,4 +56,4 @@ steps:
       RUN_NAME="yolov9-bs${train_batchsize}-ep${train_epoch}-ds${dta_folder}"
       MLFLOW_RUN_NAME=$RUN_NAME python val_dual.py --data data/${data_folder}.yaml --img 640 --batch 32 --conf 0.001\
             --iou 0.7 --device 0 --weights 'runs/train/yolov9-custom/weights/best.pt' \
-            --name yolov9_c_640_val
+            --name yolov9

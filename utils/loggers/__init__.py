@@ -53,6 +53,7 @@ try:
         mlflow = None
     else:
         import mlflow
+        mlflow.start_run()
 except (ModuleNotFoundError, ImportError, AssertionError):
     mlflow = None
 
@@ -64,7 +65,7 @@ class Loggers():
         self.weights = weights
         self.opt = opt
         self.hyp = hyp
-        self.plots = not opt.noplots  # plot results
+        self.plots = opt and not opt.noplots  # plot results
         self.logger = logger  # for printing results to console
         self.include = include
         self.current_epoch = 0
@@ -106,7 +107,7 @@ class Loggers():
             self.logger.info(s)
         # TensorBoard
         s = self.save_dir
-        if 'tb' in self.include and not self.opt.evolve:
+        if 'tb' in self.include and self.opt and not self.opt.evolve:
             prefix = colorstr('TensorBoard: ')
             self.logger.info(f"{prefix}Start with 'tensorboard --logdir {s.parent}', view at http://localhost:6006/")
             self.tb = SummaryWriter(str(s))
@@ -145,8 +146,6 @@ class Loggers():
         # MLFlow
         if mlflow and 'mlflow' in self.include:
             self.mlflow = mlflow
-            run_name = os.getenv('MLFLOW_RUN_NAME', None)
-            self.mlflow.start_run(run_name=run_name)
         else:
             self.mlflow = None
 
@@ -229,6 +228,8 @@ class Loggers():
             self.comet_logger.on_val_batch_end(batch_i, im, targets, paths, shapes, out)
 
     def on_val_end(self, nt, tp, fp, p, r, f1, ap, ap50, ap_class, confusion_matrix):
+        from pathlib import Path
+
         # Callback runs on val end
         if self.wandb or self.clearml:
             files = sorted(self.save_dir.glob('val*.jpg'))
@@ -239,6 +240,15 @@ class Loggers():
 
         if self.comet_logger:
             self.comet_logger.on_val_end(nt, tp, fp, p, r, f1, ap, ap50, ap_class, confusion_matrix)
+        if self.mlflow:
+            # Specify the folder path
+            folder_path = Path('./runs/val/exp')
+            # Use the glob method of Path to get a list of all files in the folder
+            if folder_path:
+                files = folder_path.glob('*')
+                # Print the full file path of each file
+                for file in files:
+                    self.mlflow.log_artifact(file.resolve())
 
     def on_fit_epoch_end(self, vals, epoch, best_fitness, fi):
         # Callback runs at the end of each fit (train+val) epoch
@@ -285,13 +295,14 @@ class Loggers():
                 self.clearml.task.update_output_model(model_path=str(last),
                                                       model_name='Latest Model',
                                                       auto_delete_file=False)
-
-        if self.mlflow:
-            self.mlflow.log_artifact(last)
+        #if self.mlflow:
+            # skip for per epoch model
+            # self.mlflow.log_artifact(last)
         if self.comet_logger:
             self.comet_logger.on_model_save(last, epoch, final_epoch, best_fitness, fi)
 
     def on_train_end(self, last, best, epoch, results):
+        from pathlib import Path
         # Callback runs on training end, i.e. saving best model
         if self.plots:
             plot_results(file=self.save_dir / 'results.csv')  # save results.png
@@ -325,6 +336,15 @@ class Loggers():
 
         if self.mlflow:
             self.mlflow.log_params(dict(zip(self.keys[3:10], results)))
+            self.mlflow.log_artifact(best)
+            # Specify the folder path
+            folder_path = Path(self.save_dir)
+            # Use the glob method of Path to get a list of all files in the folder
+            if folder_path:
+                files = folder_path.glob('val_*')
+                # Print the full file path of each file
+                for file in files:
+                    self.mlflow.log_artifact(file.resolve())
             self.mlflow.end_run()
 
     def on_params_update(self, params: dict):
